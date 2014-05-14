@@ -8,7 +8,7 @@ This is a CA framework to design various kinds of CAs, where it is easy to desig
 ## Running locally
 
 ```shell
-javac *.class
+javac *.java
 jar cf recca.jar *.class wogs
 appletviewer file:path/to/RECCA.html
 ```
