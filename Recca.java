@@ -40,7 +40,7 @@ public class Recca extends Applet implements Runnable
     private String lawDir;
 
     private Choice cWogs = new Choice();
-    
+
     private boolean isApplet = false;
 
     private final String clear = "Clear";
@@ -73,10 +73,10 @@ public class Recca extends Applet implements Runnable
 
     Panel controls;
     Panel lawsPanel;
-    
+
     // This method is called automatically when this is an applet
     // running in a browser
-    public void init() 
+    public void init()
     {
 		init(true);
 	}
@@ -89,22 +89,22 @@ public class Recca extends Applet implements Runnable
         int cellCols = 150;
         int cellRows = 150;
         String param;
-        
+
         this.isApplet = isApplet;
 
         // set background
         setBackground( new Color( 0x999999 ) );
-        
+
         // read parameters from HTML if in an applet
         if ( isApplet ) {
 			param = getParameter("cellsize");
 			if ( param != null )
 				cellSize = Integer.valueOf( param ).intValue();
-				
+
 			param = getParameter("cellsize");
-			if ( param != null ) 
+			if ( param != null )
 				cellSize = Integer.valueOf( param ).intValue();
-				
+
 			param = getParameter("cellcols");
 			if ( param != null )
 				cellCols = Integer.valueOf( param ).intValue();
@@ -119,7 +119,7 @@ public class Recca extends Applet implements Runnable
 		}
 
         // create components and add them to container
-        grille = new Grid( cellSize, cellCols, cellRows );
+        grille = new Grid( this, cellSize, cellCols, cellRows );
 
         // ajouter les lois
         Choice cLaws = new Choice();
@@ -129,7 +129,7 @@ public class Recca extends Applet implements Runnable
             File wols = new File("wogs");
             File[] children = wols.listFiles();
             if (children != null) {
-                for (int i=0; i<children.length; i++) {
+                for (int i = 0; i<children.length; i++) {
                     // Get filename of file or directory
                     if(children[i].isDirectory()) {
                         String[] hasLaw = children[i].list( new FilenameFilter() {
@@ -217,9 +217,9 @@ public class Recca extends Applet implements Runnable
         controls = new Panel();
         controls.add( cLaws );
         controls.add( cWogs );
-        controls.add( new Button( clear ));
+        controls.add( new Button(clear) );
         controls.add( startstopButton );
-        controls.add( new Button( nextLabel ));
+        controls.add( new Button(nextLabel) );
         controls.add( new Button(reverseLabel) );
         controls.add( new Button(fileLabel) );
         controls.add( new Button(saveLabel) );
@@ -275,9 +275,8 @@ public class Recca extends Applet implements Runnable
 			System.out.println("startValue = " + startValue );
 			if ( startValue != null )
 				actionStartStop();
-				
-		}
 
+		}
     }
 
     private String getQueryValue(String name) {
@@ -295,14 +294,14 @@ public class Recca extends Applet implements Runnable
         }
         return null;
     }
-    
+
     private void myShowStatus(String status) {
 		if ( isApplet ) {
 			myShowStatus(status);
 		} else {
 			System.out.println(status);
 		}
-		
+
 	}
 
     private InputStream nameToInputStream(String name) throws IOException {
@@ -316,7 +315,7 @@ public class Recca extends Applet implements Runnable
     private void changeRule(String ruleName) {
         /**/
         try {
-            
+
             //FileInputStream laws = new FileInputStream("wogs/" + ruleName + "/laws.wol");
             //DataInputStream laws = new DataInputStream( (new URL(getCodeBase(), "wogs/" + ruleName + "/laws.wol")).openStream() );
 
@@ -350,7 +349,7 @@ public class Recca extends Applet implements Runnable
         }
         /**/
     }
-    
+
     private void changePattern(String patternName) {
         if (alea.equals(patternName)) // random field
         {
@@ -483,8 +482,7 @@ public class Recca extends Applet implements Runnable
             grille.clear();
             grille.repaint();
             return true;
-        } else if (nextLabel.equals(arg)) // next
-        {
+        } else if (nextLabel.equals(arg)) { // next
             grille.next();
             grille.repaint();
             return true;
@@ -551,6 +549,24 @@ public class Recca extends Applet implements Runnable
         } else {
         }
         return false;
+    }
+
+    public void handleKeystroke( int key ) {
+		switch(key) {
+		case 10: // Enter
+            actionStartStop();
+			break;
+        case 32: // Space
+            grille.next();
+            grille.repaint();
+            break;
+        case 8: // Backspace
+            grille.reverse();
+            grille.next();
+            grille.reverse();
+            break;
+        default:
+        }
     }
 
     public String getAppletInfo()
