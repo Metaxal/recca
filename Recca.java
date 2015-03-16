@@ -9,7 +9,6 @@
  * when the path file name contains a space, it can cause problems to load the applet!
  * moving to a directory without space works!
  *
- *
  */
 
 
@@ -37,10 +36,12 @@ public class Recca extends Applet implements Runnable
 {
     private Grid grille;
     private Thread gameThread = null;
-    private int genTime;
+    private int genTime = 0;
     private String lawDir;
 
-    private Choice cWogs = new Choice();;
+    private Choice cWogs = new Choice();
+    
+    private boolean isApplet = false;
 
     private final String clear = "Clear";
     private final String alea = "Random";
@@ -72,42 +73,50 @@ public class Recca extends Applet implements Runnable
 
     Panel controls;
     Panel lawsPanel;
-
-
-    public void init()
+    
+    // This method is called automatically when this is an applet
+    // running in a browser
+    public void init() 
     {
-        int cellSize;
-        int cellCols;
-        int cellRows;
+		init(true);
+	}
+
+	// This method is called manually with isApplet=false when
+	// run in a frame
+    public void init(boolean isApplet)
+    {
+        int cellSize = 5;
+        int cellCols = 150;
+        int cellRows = 150;
         String param;
+        
+        this.isApplet = isApplet;
 
         // set background
         setBackground( new Color( 0x999999 ) );
+        
+        // read parameters from HTML if in an applet
+        if ( isApplet ) {
+			param = getParameter("cellsize");
+			if ( param != null )
+				cellSize = Integer.valueOf( param ).intValue();
+				
+			param = getParameter("cellsize");
+			if ( param != null ) 
+				cellSize = Integer.valueOf( param ).intValue();
+				
+			param = getParameter("cellcols");
+			if ( param != null )
+				cellCols = Integer.valueOf( param ).intValue();
 
-        // read parameters from HTML
-        param = getParameter("cellsize");
-        if ( param == null) {
-            cellSize = 5;
-        } else
-            cellSize = Integer.valueOf( param ).intValue();
+			param = getParameter("cellrows");
+			if ( param != null )
+				cellRows = Integer.valueOf( param ).intValue();
 
-        param = getParameter("cellcols");
-        if ( param == null ) {
-            cellCols = 150;
-        } else
-            cellCols = Integer.valueOf( param ).intValue();
-
-        param = getParameter("cellrows");
-        if ( param == null ) {
-            cellRows = 150;
-        } else
-            cellRows = Integer.valueOf( param ).intValue();
-
-        param = getParameter("gentime");
-        if ( param == null ) {
-            genTime = 0;
-        } else
-            genTime = Integer.valueOf( param ).intValue();
+			param = getParameter("gentime");
+			if ( param != null )
+				genTime = Integer.valueOf( param ).intValue();
+		}
 
         // create components and add them to container
         grille = new Grid( cellSize, cellCols, cellRows );
@@ -148,7 +157,7 @@ public class Recca extends Applet implements Runnable
             }
             System.out.println( nb + " lois chargées");
         } catch (IOException e) {
-            showStatus( "Error while loading resources." );
+            myShowStatus( "Error while loading resources." );
         }
         /**/
 
@@ -242,29 +251,32 @@ public class Recca extends Applet implements Runnable
         validate();
 
 
-        // We can now give parameters to the URL!!
-        // example:
-        // file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true
-        // with direct link to the applet:
-        // file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true#applet
+		if ( isApplet ) {
+			// We can now give parameters to the URL!!
+			// example:
+			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true
+			// with direct link to the applet:
+			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true#applet
 
-        System.out.println("href =" + getDocumentBase());
-        String ruleName = getQueryValue( "rule" );
-        System.out.println("ruleName = " + ruleName);
-        if ( ruleName != null )
-            changeRule( ruleName );
-        String patternName = getQueryValue( "pattern" );
-        System.out.println("patternName = " + patternName);
-        if ( patternName != null )
-            changePattern( patternName );
-        String speedValue = getQueryValue( "speed" );
-        System.out.println("speedValue = " + speedValue);
-        if ( speedValue != null )
-            changeSpeed( speedValue );
-        String startValue = getQueryValue( "start" );
-        System.out.println("startValue = " + startValue );
-        if ( startValue != null )
-            actionStartStop();
+			System.out.println("href =" + getDocumentBase());
+			String ruleName = getQueryValue( "rule" );
+			System.out.println("ruleName = " + ruleName);
+			if ( ruleName != null )
+				changeRule( ruleName );
+			String patternName = getQueryValue( "pattern" );
+			System.out.println("patternName = " + patternName);
+			if ( patternName != null )
+				changePattern( patternName );
+			String speedValue = getQueryValue( "speed" );
+			System.out.println("speedValue = " + speedValue);
+			if ( speedValue != null )
+				changeSpeed( speedValue );
+			String startValue = getQueryValue( "start" );
+			System.out.println("startValue = " + startValue );
+			if ( startValue != null )
+				actionStartStop();
+				
+		}
 
     }
 
@@ -283,20 +295,40 @@ public class Recca extends Applet implements Runnable
         }
         return null;
     }
+    
+    private void myShowStatus(String status) {
+		if ( isApplet ) {
+			myShowStatus(status);
+		} else {
+			System.out.println(status);
+		}
+		
+	}
+
+    private InputStream nameToInputStream(String name) throws IOException {
+		if ( isApplet ) {
+			return new DataInputStream( (new URL(getCodeBase(), name)).openStream() );
+		} else {
+			return new FileInputStream(name);
+		}
+	}
 
     private void changeRule(String ruleName) {
         /**/
         try {
+            
             //FileInputStream laws = new FileInputStream("wogs/" + ruleName + "/laws.wol");
-            DataInputStream laws = new DataInputStream(
-                    (new URL( getCodeBase(), "wogs/" + ruleName + "/laws.wol" )).openStream() ) ;
+            //DataInputStream laws = new DataInputStream( (new URL(getCodeBase(), "wogs/" + ruleName + "/laws.wol")).openStream() );
 
-            lawDir = ruleName;
-            grille.chargerLois(laws);
+			InputStream lawStream = nameToInputStream("wogs/" + ruleName + "/laws.wol");
+            grille.chargerLois(lawStream);
+            lawDir = ruleName; // set it afterwards in case the above fails
             reloadCWogs();
         } catch (IOException e) {
             System.out.println("Error while loading laws " + ruleName);
-            showStatus("Error while loading resource.");
+            System.out.println(e.toString());
+            if ( isApplet )
+				myShowStatus("Error while loading resource.");
         }
         /*/
         ZipInputStream zi = new ZipInputStream(getClass().getClassLoader()
@@ -312,13 +344,13 @@ public class Recca extends Applet implements Runnable
                 reloadCWogs();
             }
             else
-                showStatus("Laws not found.");
+                myShowStatus("Laws not found.");
         } catch (IOException e) {
-            showStatus("Error while loading resource.");
+            myShowStatus("Error while loading resource.");
         }
         /**/
     }
-
+    
     private void changePattern(String patternName) {
         if (alea.equals(patternName)) // random field
         {
@@ -328,12 +360,12 @@ public class Recca extends Applet implements Runnable
             /**/
             try {
                 //FileInputStream pat = new FileInputStream("wogs/" + lawDir + "/" + patternName + ".wog");
-                DataInputStream pat = new DataInputStream(
-                        (new URL( getCodeBase(), "wogs/" + lawDir + "/" + patternName + ".wog" )).openStream() ) ;
-                drawStream(pat);
+                //DataInputStream pat = new DataInputStream(
+                //        (new URL( getCodeBase(), "wogs/" + lawDir + "/" + patternName + ".wog" )).openStream() ) ;
+                drawStream(nameToInputStream("wogs/" + lawDir + "/" + patternName + ".wog" ));
             } catch (IOException e) {
                 System.out.println("Error while loading pattern " + patternName);
-                showStatus("Error while loading resource.");
+                myShowStatus("Error while loading resource.");
             }
             /*/
             ZipInputStream zi = new ZipInputStream(getClass().getClassLoader()
@@ -346,7 +378,7 @@ public class Recca extends Applet implements Runnable
                 if (zie != null)
                     drawStream(zi);
             } catch (IOException e) {
-                showStatus("Error while loading resource.");
+                myShowStatus("Error while loading resource.");
             }
             /**/
         }
@@ -392,7 +424,7 @@ public class Recca extends Applet implements Runnable
             }
             System.out.println( nb + " éléments chargés");
         } catch (IOException e) {
-            showStatus( "Error while loading resources." );
+            myShowStatus( "Error while loading resources." );
         }
         /**/
         validate();
@@ -530,9 +562,9 @@ public class Recca extends Applet implements Runnable
     // draws the shape to canvas
     public void drawShape( int shapeWidth, int shapeHeight, int shape[][] ) {
         if ( !grille.drawShape( shapeWidth, shapeHeight, shape ) )
-            showStatus( "Shape too large." );
+            myShowStatus( "Shape too large." );
         else {
-            showStatus( "" );
+            myShowStatus( "" );
             grille.repaint();
         }
     }
@@ -560,9 +592,9 @@ public class Recca extends Applet implements Runnable
         dis.close();
         fileReader.close();
         if ( !grille.drawShape( shapeWidth, shapeHeight, shapeb ) )
-            showStatus( "Shape too large." );
+            myShowStatus( "Shape too large." );
         else {
-            showStatus( "File correctly opened. " +shapeWidth +" "+ shapeHeight );
+            myShowStatus( "File correctly opened. " +shapeWidth +" "+ shapeHeight );
             grille.repaint();
         }
 
@@ -574,9 +606,9 @@ public class Recca extends Applet implements Runnable
             drawStream(new FileInputStream(fichier));
 
         } catch(FileNotFoundException e) {
-            showStatus( "File not found." );
+            myShowStatus( "File not found." );
         } catch(IOException e) {
-            showStatus( "Error while reading file." );
+            myShowStatus( "Error while reading file." );
         }
 
     }
@@ -587,9 +619,9 @@ public class Recca extends Applet implements Runnable
             drawStream(url.openStream());
 
         } catch(FileNotFoundException e) {
-            showStatus( "File not found." );
+            myShowStatus( "File not found." );
         } catch(IOException e) {
-            showStatus( "Error while reading file." );
+            myShowStatus( "Error while reading file." );
         }
 
     }
@@ -631,9 +663,9 @@ public class Recca extends Applet implements Runnable
                 grille.sauver(fileWriter);
                 fileWriter.close();
             } catch (FileNotFoundException e) {
-                showStatus( "Cannot open file for writing." );
+                myShowStatus( "Cannot open file for writing." );
             } catch (IOException e) {
-                showStatus( "Error saving file." );
+                myShowStatus( "Error saving file." );
             }
         }
 
@@ -654,9 +686,9 @@ public class Recca extends Applet implements Runnable
             try {
                 grille.chargerLois(new FileInputStream(filepath));
             } catch (FileNotFoundException e) {
-                showStatus( "Cannot open file for writing." );
+                myShowStatus( "Cannot open file for writing." );
             } catch (IOException e) {
-                showStatus( "Error saving file." );
+                myShowStatus( "Error saving file." );
             }
         }
     }
@@ -682,9 +714,9 @@ public class Recca extends Applet implements Runnable
                 grille.sauverLois(fileWriter);
                 fileWriter.close();
             } catch (FileNotFoundException e) {
-                showStatus( "Cannot open file for writing." );
+                myShowStatus( "Cannot open file for writing." );
             } catch (IOException e) {
-                showStatus( "Error saving file." );
+                myShowStatus( "Error saving file." );
             }
         }
 

@@ -233,7 +233,7 @@ class Grid extends Canvas
 	}
 	
 	public synchronized boolean keyDown(java.awt.Event evt, int key) {
-		System.out.println("touche = "+key);
+		//System.out.println("touche = "+key);
 		if(!edition)
 			return true;
 
