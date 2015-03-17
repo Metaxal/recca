@@ -1,9 +1,3 @@
-/*
- * Règles de l'automate cellulaire :
- *  - incidence de deux photons -> ils rebondissent s'ils sont perpendiculaires
- *  - incidence de trois photons -> rebond si 2 photons forment une ligne
- * */
-
 /* Applet Problems ?
  * from: http://forums.sun.com/thread.jspa?threadID=655119
  * when the path file name contains a space, it can cause problems to load the applet!
@@ -11,7 +5,7 @@
  *
  */
 
-
+import java.util.Arrays;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -28,24 +22,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-//import java.net.MalformedURLException;
 import java.net.URL;
 
-
-public class Recca extends Applet implements Runnable
-{
+public class Recca extends Applet implements Runnable {
     private Grid grille;
     private Thread gameThread = null;
     private int genTime = 0;
     private String lawDir;
-
-    private Choice cWogs = new Choice();
-
     private boolean isApplet = false;
 
     private final String clear = "Clear";
     private final String alea = "Random";
-//  private final String oscil1 = "Oscil1";
     private final String slow = "Slow";
     private final String fast = "Normal";
     private final String faster = "Fast";
@@ -69,22 +56,22 @@ public class Recca extends Applet implements Runnable
 
     private Button startstopButton;
     private Button editionButton;
-    //private boolean maxSpeed = false;
+
+	private Choice cLaws = new Choice();
+    private Choice cWogs = new Choice();
 
     Panel controls;
     Panel lawsPanel;
 
     // This method is called automatically when this is an applet
     // running in a browser
-    public void init()
-    {
+    public void init() {
 		init(true);
 	}
 
 	// This method is called manually with isApplet=false when
 	// run in a frame
-    public void init(boolean isApplet)
-    {
+    public void init(boolean isApplet) {
         int cellSize = 5;
         int cellCols = 150;
         int cellRows = 150;
@@ -93,165 +80,116 @@ public class Recca extends Applet implements Runnable
         this.isApplet = isApplet;
 
         // set background
-        setBackground( new Color( 0x999999 ) );
+        setBackground(new Color(0x999999));
 
         // read parameters from HTML if in an applet
-        if ( isApplet ) {
+        if(isApplet) {
 			param = getParameter("cellsize");
-			if ( param != null )
-				cellSize = Integer.valueOf( param ).intValue();
+			if(param!= null)
+				cellSize = Integer.valueOf(param).intValue();
 
 			param = getParameter("cellsize");
-			if ( param != null )
-				cellSize = Integer.valueOf( param ).intValue();
+			if(param!= null)
+				cellSize = Integer.valueOf(param).intValue();
 
 			param = getParameter("cellcols");
-			if ( param != null )
-				cellCols = Integer.valueOf( param ).intValue();
+			if(param!= null)
+				cellCols = Integer.valueOf(param).intValue();
 
 			param = getParameter("cellrows");
-			if ( param != null )
-				cellRows = Integer.valueOf( param ).intValue();
+			if(param!= null)
+				cellRows = Integer.valueOf(param).intValue();
 
 			param = getParameter("gentime");
-			if ( param != null )
-				genTime = Integer.valueOf( param ).intValue();
+			if(param!= null)
+				genTime = Integer.valueOf(param).intValue();
 		}
 
         // create components and add them to container
-        grille = new Grid( this, cellSize, cellCols, cellRows );
+        grille = new Grid(this, cellSize, cellCols, cellRows);
 
-        // ajouter les lois
-        Choice cLaws = new Choice();
+        // add the laws
         cLaws.add("Rules");
-        //try {
-        /**/
-            File wols = new File("wogs");
-            File[] children = wols.listFiles();
-            if (children != null) {
-                for (int i = 0; i<children.length; i++) {
-                    // Get filename of file or directory
-                    if(children[i].isDirectory()) {
-                        String[] hasLaw = children[i].list( new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
-                                return name.equals("laws.wol");
-                            }});
-                        if(hasLaw != null && hasLaw.length > 0)
-                            cLaws.add(children[i].getName());
-                    }
-                }
-            }
-            /*/
-            ZipInputStream zi = new ZipInputStream(getClass().getClassLoader().getResourceAsStream("wogs.zip"));
-            ZipEntry zie;
-            // ajouter automatiquement tout ce qu'il y a dans les ressources
-            int nb = 0;
-            for (int i=0; (zie = zi.getNextEntry()) != null ;i++) {
-                String dir = "wogs/";
-                String lawName = "/laws.wol";
-                if(zie.getName().startsWith(dir) && zie.getName().endsWith(lawName)) {
-                    String name = zie.getName().substring(dir.length(), zie.getName().length()-lawName.length());
-                    cLaws.add(name);
-                    nb++;
-                }
-            }
-            System.out.println( nb + " lois chargées");
-        } catch (IOException e) {
-            myShowStatus( "Error while loading resources." );
-        }
-        /**/
-
-        cLaws.addItemListener( new ItemListener() {
+        reloadRules();
+        cLaws.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
-                    System.out.println("loading laws " + arg);
+                    System.out.println("Loading laws " + arg);
                     changeRule(arg);
               }});
 
         reloadCWogs();
-
-        cWogs.addItemListener( new ItemListener() {
+        cWogs.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
-                    System.out.println("loading pattern " + arg);
+                    System.out.println("Loading pattern " + arg);
                     changePattern(arg);
               }});
 
 
         Choice cSpeed = new Choice();
-        cSpeed.addItemListener( new ItemListener() {
+        cSpeed.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
-                    System.out.println("loading pattern " + arg);
+                    System.out.println("Changing speed " + arg);
                     changeSpeed(arg);
               }});
 
-        cSpeed.add( slow );
-        cSpeed.add( fast );
-        cSpeed.add( faster );
-        cSpeed.add( maxSpeed );
+        cSpeed.add(slow);
+        cSpeed.add(fast);
+        cSpeed.add(faster);
+        cSpeed.add(maxSpeed);
         cSpeed.select(1);
         genTime = 30;
 
         /*
         Choice palettes = new Choice();
-        palettes.addItem( pal1 );
-        palettes.addItem( pal2 );
-        palettes.addItem( pal3 );
+        palettes.addItem(pal1);
+        palettes.addItem(pal2);
+        palettes.addItem(pal3);
         palettes.select(0);
         grille.setPalette(0);
         */
 
-
-
-        startstopButton = new Button( startLabel );
-        startstopButton.addActionListener( new ActionListener() {
+        startstopButton = new Button(startLabel);
+        startstopButton.addActionListener(new ActionListener() {
               public void actionPerformed(ActionEvent evt) {
-                    //String arg = evt.getItem().toString();
-                    //System.out.println("loading pattern " + arg);
-                    //changeSpeed(arg);
                   actionStartStop();
             }});
-        editionButton = new Button( edition );
+        editionButton = new Button(edition);
 
         controls = new Panel();
-        controls.add( cLaws );
-        controls.add( cWogs );
-        controls.add( new Button(clear) );
-        controls.add( startstopButton );
-        controls.add( new Button(nextLabel) );
-        controls.add( new Button(reverseLabel) );
-        controls.add( new Button(fileLabel) );
-        controls.add( new Button(saveLabel) );
-        controls.add( cSpeed );
-        //controls.add( palettes );
-        controls.add( editionButton );
-        controls.add( new Button( gridLabel ));
-        controls.add( new Button( loisLabel ));
+        controls.add(cLaws);
+        controls.add(cWogs);
+        controls.add(new Button(clear));
+        controls.add(startstopButton);
+        controls.add(new Button(nextLabel));
+        controls.add(new Button(reverseLabel));
+        controls.add(new Button(fileLabel));
+        controls.add(new Button(saveLabel));
+        controls.add(cSpeed);
+        //controls.add(palettes);
+        controls.add(editionButton);
+        controls.add(new Button(gridLabel));
+        controls.add(new Button(loisLabel));
 
-
-        // Le panneau des lois
-        //Choice choiceLaws = new Choice();
-        //choiceLaws.add( "laws1.txt" );
 
         lawsPanel = new Panel();
-        //lawsPanel.add( choiceLaws );
-        lawsPanel.add( new Button( chargerLoisLabel ));
-        lawsPanel.add( new Button( sauverLoisLabel ));
-        lawsPanel.add( new Button( automateLabel ));
+        lawsPanel.add(new Button(chargerLoisLabel));
+        lawsPanel.add(new Button(sauverLoisLabel));
+        lawsPanel.add(new Button(automateLabel));
 
 
         setLayout(new BorderLayout());
-        //add( "North", lawsPanel);
-        add( "North", controls );
+        add("North", controls);
         grille.setMode(grille.MODE_AUTOMATE);
-        add( "Center", grille );
+        add("Center", grille);
         setVisible(true);
-        resize( getPreferredSize() );
+        resize(getPreferredSize());
         validate();
 
 
-		if ( isApplet ) {
+		if(isApplet) {
 			// We can now give parameters to the URL!!
 			// example:
 			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true
@@ -259,21 +197,21 @@ public class Recca extends Applet implements Runnable
 			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true#applet
 
 			System.out.println("href =" + getDocumentBase());
-			String ruleName = getQueryValue( "rule" );
+			String ruleName = getQueryValue("rule");
 			System.out.println("ruleName = " + ruleName);
-			if ( ruleName != null )
-				changeRule( ruleName );
-			String patternName = getQueryValue( "pattern" );
+			if(ruleName != null)
+				changeRule(ruleName);
+			String patternName = getQueryValue("pattern");
 			System.out.println("patternName = " + patternName);
-			if ( patternName != null )
-				changePattern( patternName );
-			String speedValue = getQueryValue( "speed" );
+			if(patternName != null)
+				changePattern(patternName);
+			String speedValue = getQueryValue("speed");
 			System.out.println("speedValue = " + speedValue);
-			if ( speedValue != null )
-				changeSpeed( speedValue );
-			String startValue = getQueryValue( "start" );
-			System.out.println("startValue = " + startValue );
-			if ( startValue != null )
+			if(speedValue != null)
+				changeSpeed(speedValue);
+			String startValue = getQueryValue("start");
+			System.out.println("startValue = " + startValue);
+			if(startValue != null)
 				actionStartStop();
 
 		}
@@ -296,7 +234,7 @@ public class Recca extends Applet implements Runnable
     }
 
     private void myShowStatus(String status) {
-		if ( isApplet ) {
+		if(isApplet) {
 			myShowStatus(status);
 		} else {
 			System.out.println(status);
@@ -305,138 +243,91 @@ public class Recca extends Applet implements Runnable
 	}
 
     private InputStream nameToInputStream(String name) throws IOException {
-		if ( isApplet ) {
-			return new DataInputStream( (new URL(getCodeBase(), name)).openStream() );
+		if(isApplet) {
+			return new DataInputStream((new URL(getCodeBase(), name)).openStream());
 		} else {
 			return new FileInputStream(name);
 		}
 	}
 
     private void changeRule(String ruleName) {
-        /**/
         try {
-
-            //FileInputStream laws = new FileInputStream("wogs/" + ruleName + "/laws.wol");
-            //DataInputStream laws = new DataInputStream( (new URL(getCodeBase(), "wogs/" + ruleName + "/laws.wol")).openStream() );
-
 			InputStream lawStream = nameToInputStream("wogs/" + ruleName + "/laws.wol");
             grille.chargerLois(lawStream);
             lawDir = ruleName; // set it afterwards in case the above fails
             reloadCWogs();
-        } catch (IOException e) {
+        } catch(IOException e) {
             System.out.println("Error while loading laws " + ruleName);
             System.out.println(e.toString());
-            if ( isApplet )
+            if(isApplet)
 				myShowStatus("Error while loading resource.");
         }
-        /*/
-        ZipInputStream zi = new ZipInputStream(getClass().getClassLoader()
-                .getResourceAsStream("wogs.zip"));
-        ZipEntry zie;
-        try {
-            do {
-                zie = zi.getNextEntry();
-            } while (zie != null && !zie.getName().equals("wogs/" + ruleName + "/laws.wol"));
-            if (zie != null){
-                lawDir = ruleName;
-                grille.chargerLois(zi);
-                reloadCWogs();
-            }
-            else
-                myShowStatus("Laws not found.");
-        } catch (IOException e) {
-            myShowStatus("Error while loading resource.");
-        }
-        /**/
     }
 
     private void changePattern(String patternName) {
-        if (alea.equals(patternName)) // random field
-        {
+        if(alea.equals(patternName)) {
             grille.randomField();
             grille.repaint();
         } else {
-            /**/
             try {
-                //FileInputStream pat = new FileInputStream("wogs/" + lawDir + "/" + patternName + ".wog");
-                //DataInputStream pat = new DataInputStream(
-                //        (new URL( getCodeBase(), "wogs/" + lawDir + "/" + patternName + ".wog" )).openStream() ) ;
-                drawStream(nameToInputStream("wogs/" + lawDir + "/" + patternName + ".wog" ));
-            } catch (IOException e) {
+                drawStream(nameToInputStream("wogs/" + lawDir + "/" + patternName + ".wog"));
+            } catch(IOException e) {
                 System.out.println("Error while loading pattern " + patternName);
                 myShowStatus("Error while loading resource.");
             }
-            /*/
-            ZipInputStream zi = new ZipInputStream(getClass().getClassLoader()
-                    .getResourceAsStream("wogs.zip"));
-            ZipEntry zie;
-            try {
-                do {
-                    zie = zi.getNextEntry();
-                } while (zie != null && !zie.getName().equals("wogs/" + lawDir + "/" + patternName + ".wog"));
-                if (zie != null)
-                    drawStream(zi);
-            } catch (IOException e) {
-                myShowStatus("Error while loading resource.");
-            }
-            /**/
         }
     }
+    
+    private void reloadRules() {
+		File wols = new File("wogs");
+		File[] children = wols.listFiles();
+		if(children != null) {
+			Arrays.sort(children);
+			for(int i = 0; i<children.length; i++) {
+				// Get filename of file or directory
+				if(children[i].isDirectory()) {
+					String[] hasLaw = children[i].list(new FilenameFilter() {
+						public boolean accept(File dir, String name) {
+							return name.equals("laws.wol");
+						}});
+					if(hasLaw != null && hasLaw.length > 0)
+						cLaws.add(children[i].getName());
+				}
+			}
+		}
+	}
 
     private void reloadCWogs() {
-        /*
-         * wog.zip must contain a directory named "wogs" containing subdirectories which contains files named wogs
-         * and a law file name laws.wol
-         */
+		// wog.zip must contain a directory named "wogs" containing subdirectories which contains files named wogs
+        // and a law file name laws.wol
         cWogs.removeAll();
-        cWogs.add( "Patterns" );
-        cWogs.add( alea );
+        cWogs.add("Patterns");
+        cWogs.add(alea);
 
-        /**/
         File wols = new File("wogs/" + lawDir);
-        File[] children = wols.listFiles( new FilenameFilter() {
+        File[] children = wols.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".wog");
             }});
-        if (children != null) {
-            for (int i=0; i<children.length; i++) {
+        if(children != null) {
+			Arrays.sort(children);
+            for(int i=0; i<children.length; i++) {
                 String name = children[i].getName();
                 System.out.println(children[i].getName());
                 cWogs.add(name.substring(0, name.length()-4));
-                //nb++;
             }
         }
-        /*/
-        try {
-            ZipInputStream zi = new ZipInputStream(getClass().getClassLoader().getResourceAsStream("wogs.zip"));
-            int nb=0;
-            ZipEntry zie;
-            // ajouter automatiquement tout ce qu'il y a dans les ressources
-            for (int i=0; (zie = zi.getNextEntry()) != null ;i++) {
-                String dir = "wogs/" + lawDir + "/";
-                if(zie.getName().startsWith(dir) && zie.getName().endsWith(".wog")) {
-                    String name = zie.getName().substring(dir.length(), zie.getName().length()-4);
-                    System.out.println(zie.getName());
-                    cWogs.add(name);
-                    nb++;
-                }
-            }
-            System.out.println( nb + " éléments chargés");
-        } catch (IOException e) {
-            myShowStatus( "Error while loading resources." );
-        }
-        /**/
-        validate();
+       validate();
     }
 
     private void changeSpeed(String arg) {
-        if (slow.equals(arg))
+        if(slow.equals(arg))
             genTime = 200;
-        else if (fast.equals(arg))
+        else if(fast.equals(arg))
             genTime = 30;
-        else if (faster.equals(arg))
+        else if(faster.equals(arg))
             genTime = 0;
-        else if (maxSpeed.equals(arg))
+        else if(maxSpeed.equals(arg))
             genTime = -1;
     }
 
@@ -466,82 +357,83 @@ public class Recca extends Applet implements Runnable
     }
 
     public void run() {
-        while (gameThread != null) {
+        while(gameThread != null) {
             grille.next();
             grille.repaint();
-            if(genTime != -1)
+            if(genTime != -1) {
                 try {
-                    Thread.sleep( genTime );
-                } catch (InterruptedException e){}
+                    Thread.sleep(genTime);
+                } catch(InterruptedException e) {}
+			}
         }
     }
 
     public boolean action(Event evt, Object arg) {
-        if (clear.equals(arg)) // clear
+        if(clear.equals(arg)) // clear
         {
             grille.clear();
             grille.repaint();
             return true;
-        } else if (nextLabel.equals(arg)) { // next
+        } else if(nextLabel.equals(arg)) { // next
             grille.next();
             grille.repaint();
             return true;
-        } else if (fileLabel.equals(arg)) {
+        } else if(fileLabel.equals(arg)) {
             ouvrirFichier();
             grille.repaint();
             return true;
-        } else if (saveLabel.equals(arg)) {
+        } else if(saveLabel.equals(arg)) {
             sauver();
             return true;
-        } else if (reverseLabel.equals(arg)) {
+        } else if(reverseLabel.equals(arg)) {
             grille.reverse();
             grille.repaint();
             return true;
-        } else if (pal1.equals(arg)) {
+        } else if(pal1.equals(arg)) {
             grille.setPalette(0);
             grille.repaint();
             return true;
-        } else if (pal2.equals(arg)) {
+        } else if(pal2.equals(arg)) {
             grille.setPalette(1);
             grille.repaint();
             return true;
-        } else if (pal3.equals(arg)) {
+        } else if(pal3.equals(arg)) {
             grille.setPalette(2);
             grille.repaint();
             return true;
-        } else if (edition.equals(arg)) {
+        } else if(edition.equals(arg)) {
             grille.invertEdition();
             editionButton.setLabel(endEdition);
             grille.repaint();
             return true;
-        } else if (endEdition.equals(arg)) {
+        } else if(endEdition.equals(arg)) {
             grille.invertEdition();
             editionButton.setLabel(edition);
             grille.repaint();
             return true;
-        } else if (gridLabel.equals(arg)) {
+        } else if(gridLabel.equals(arg)) {
             grille.invertGridMode();
             grille.repaint();
             return true;
-        } else if (loisLabel.equals(arg)) {
-            remove( controls );
-            add( "North", lawsPanel);
+        } else if(loisLabel.equals(arg)) {
+            remove(controls);
+            add("North", lawsPanel);
             grille.setMode(grille.MODE_LOIS);
             grille.repaint();
             validate();
             return true;
-        } else if (automateLabel.equals(arg)) {
-            remove( lawsPanel );
-            add( "North", controls);
+        } else if(automateLabel.equals(arg)) {
+            remove(lawsPanel);
+            add("North", controls);
             grille.setMode(grille.MODE_AUTOMATE);
             grille.initPalettes();
             grille.repaint();
             validate();
             return true;
-        } else if (sauverLoisLabel.equals(arg)) {
+        } else if(sauverLoisLabel.equals(arg)) {
             sauverLois();
             return true;
-        } else if (chargerLoisLabel.equals(arg)) {
+        } else if(chargerLoisLabel.equals(arg)) {
             chargerLois();
             //grille.initPalettes();
             //grille.repaint();
@@ -551,7 +443,7 @@ public class Recca extends Applet implements Runnable
         return false;
     }
 
-    public void handleKeystroke( int key ) {
+    public void handleKeystroke(int key) {
 		switch(key) {
 		case 10: // Enter
             actionStartStop();
@@ -576,11 +468,11 @@ public class Recca extends Applet implements Runnable
 
 
     // draws the shape to canvas
-    public void drawShape( int shapeWidth, int shapeHeight, int shape[][] ) {
-        if ( !grille.drawShape( shapeWidth, shapeHeight, shape ) )
-            myShowStatus( "Shape too large." );
+    public void drawShape(int shapeWidth, int shapeHeight, int shape[][]) {
+        if(!grille.drawShape(shapeWidth, shapeHeight, shape))
+            myShowStatus("Shape too large.");
         else {
-            myShowStatus( "" );
+            myShowStatus("");
             grille.repaint();
         }
     }
@@ -607,10 +499,10 @@ public class Recca extends Applet implements Runnable
             shapeb[i] = dis.readInt();
         dis.close();
         fileReader.close();
-        if ( !grille.drawShape( shapeWidth, shapeHeight, shapeb ) )
-            myShowStatus( "Shape too large." );
+        if(!grille.drawShape(shapeWidth, shapeHeight, shapeb))
+            myShowStatus("Shape too large.");
         else {
-            myShowStatus( "File correctly opened. " +shapeWidth +" "+ shapeHeight );
+            myShowStatus("File correctly opened. " +shapeWidth +" "+ shapeHeight);
             grille.repaint();
         }
 
@@ -622,9 +514,9 @@ public class Recca extends Applet implements Runnable
             drawStream(new FileInputStream(fichier));
 
         } catch(FileNotFoundException e) {
-            myShowStatus( "File not found." );
+            myShowStatus("File not found.");
         } catch(IOException e) {
-            myShowStatus( "Error while reading file." );
+            myShowStatus("Error while reading file.");
         }
 
     }
@@ -635,9 +527,9 @@ public class Recca extends Applet implements Runnable
             drawStream(url.openStream());
 
         } catch(FileNotFoundException e) {
-            myShowStatus( "File not found." );
+            myShowStatus("File not found.");
         } catch(IOException e) {
-            myShowStatus( "Error while reading file." );
+            myShowStatus("Error while reading file.");
         }
 
     }
@@ -648,10 +540,10 @@ public class Recca extends Applet implements Runnable
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog( parent, "Open wog file", FileDialog.LOAD );
+        FileDialog filedialog = new FileDialog(parent, "Open wog file", FileDialog.LOAD);
         filedialog.setFile("*.wog");
         filedialog.setVisible(true);
-        if ( filedialog.getFile() != null ) {
+        if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             drawFichier(filepath);
@@ -664,10 +556,10 @@ public class Recca extends Applet implements Runnable
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog( parent, "Save wog file", FileDialog.SAVE );
+        FileDialog filedialog = new FileDialog(parent, "Save wog file", FileDialog.SAVE);
         filedialog.setFile("*.wog");
         filedialog.setVisible(true);
-        if ( filedialog.getFile() != null ) {
+        if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             if(filename.indexOf('.') == -1)
@@ -678,10 +570,10 @@ public class Recca extends Applet implements Runnable
                 fileWriter = new FileOutputStream(filepath);
                 grille.sauver(fileWriter);
                 fileWriter.close();
-            } catch (FileNotFoundException e) {
-                myShowStatus( "Cannot open file for writing." );
-            } catch (IOException e) {
-                myShowStatus( "Error saving file." );
+            } catch(FileNotFoundException e) {
+                myShowStatus("Cannot open file for writing.");
+            } catch(IOException e) {
+                myShowStatus("Error saving file.");
             }
         }
 
@@ -693,18 +585,18 @@ public class Recca extends Applet implements Runnable
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog( parent, "Open laws file", FileDialog.LOAD );
+        FileDialog filedialog = new FileDialog(parent, "Open laws file", FileDialog.LOAD);
         filedialog.setFile("*.wol");
         filedialog.setVisible(true);
-        if ( filedialog.getFile() != null ) {
+        if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             try {
                 grille.chargerLois(new FileInputStream(filepath));
-            } catch (FileNotFoundException e) {
-                myShowStatus( "Cannot open file for writing." );
-            } catch (IOException e) {
-                myShowStatus( "Error saving file." );
+            } catch(FileNotFoundException e) {
+                myShowStatus("Cannot open file for writing.");
+            } catch(IOException e) {
+                myShowStatus("Error saving file.");
             }
         }
     }
@@ -715,10 +607,10 @@ public class Recca extends Applet implements Runnable
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog( parent, "Save laws file", FileDialog.SAVE );
+        FileDialog filedialog = new FileDialog(parent, "Save laws file", FileDialog.SAVE);
         filedialog.setFile("*.wol");
         filedialog.setVisible(true);
-        if ( filedialog.getFile() != null ) {
+        if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             if(filename.indexOf('.') == -1)
@@ -729,10 +621,10 @@ public class Recca extends Applet implements Runnable
                 fileWriter = new FileOutputStream(filepath);
                 grille.sauverLois(fileWriter);
                 fileWriter.close();
-            } catch (FileNotFoundException e) {
-                myShowStatus( "Cannot open file for writing." );
-            } catch (IOException e) {
-                myShowStatus( "Error saving file." );
+            } catch(FileNotFoundException e) {
+                myShowStatus("Cannot open file for writing.");
+            } catch(IOException e) {
+                myShowStatus("Error saving file.");
             }
         }
 
@@ -742,9 +634,10 @@ public class Recca extends Applet implements Runnable
 
 
 /*
- * Bouton Undo !
- * Edition en mode diagonale OU normale
- * Afficher les lignes de couleur différente pour se repérer (genre tous les 16, 8, 32...)
+ * TODO
+ * - Undo button
+ * - Edit mode in diagonal
+ * - Choose what symmetries to apply
  */
 
 /*
