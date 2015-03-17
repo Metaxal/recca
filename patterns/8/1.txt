@@ -1,3 +1,0 @@
-1.wog est un schéma qui se reproduit tout seul !
-au bout d'un tres grand nombre d'itérations, il arrive sur un schéma répétitif 
-très différent du début
