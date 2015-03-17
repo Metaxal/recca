@@ -453,9 +453,11 @@ public class Recca extends Applet implements Runnable {
             grille.repaint();
             break;
         case 8: // Backspace
+			// One step back
             grille.reverse();
             grille.next();
             grille.reverse();
+            grille.repaint();
             break;
         default:
         }
@@ -463,7 +465,7 @@ public class Recca extends Applet implements Runnable {
 
     public String getAppletInfo()
     {
-        return "RECCA\nCopyright 2005 Laurent Orseau";
+        return "RECCA\nCopyright 2005-2015 Laurent Orseau";
     }
 
 

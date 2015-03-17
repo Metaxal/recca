@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.*;
 /*
  * This automaton class is based on Fredkin'd Billiard Ball machine with a Moore neighbourhood.
- *
+ * (well actually I had the idea separately, but Fredkin's clearly predates this)
  */
 
 /**
@@ -213,9 +213,11 @@ class Grid extends Canvas {
 	}
 
 	public synchronized boolean keyDown(java.awt.Event evt, int key) {
-		System.out.println("touche = " + key);
-		if(!edition)
+		System.out.println("key = " + key);
+		if(!edition) {
+			recca.handleKeystroke(key);
 			return true;
+		}
 
 		int xi = Math.min(xEdit, xEdit2);
 		int yi = Math.min(yEdit, yEdit2);
