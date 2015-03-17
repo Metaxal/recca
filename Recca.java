@@ -53,6 +53,10 @@ public class Recca extends Applet implements Runnable {
     private final String automateLabel = "Automaton";
     private final String chargerLoisLabel = "Load Laws";
     private final String sauverLoisLabel = "Save Laws";
+    
+    private final String patternDir = "patterns";
+    private final String patternExt = ".pat";
+    private final String lawExt = ".law";
 
     private Button startstopButton;
     private Button editionButton;
@@ -252,7 +256,7 @@ public class Recca extends Applet implements Runnable {
 
     private void changeRule(String ruleName) {
         try {
-			InputStream lawStream = nameToInputStream("wogs/" + ruleName + "/laws.wol");
+			InputStream lawStream = nameToInputStream(patternDir + "/" + ruleName + "/laws" + lawExt);
             grille.chargerLois(lawStream);
             lawDir = ruleName; // set it afterwards in case the above fails
             reloadCWogs();
@@ -270,7 +274,7 @@ public class Recca extends Applet implements Runnable {
             grille.repaint();
         } else {
             try {
-                drawStream(nameToInputStream("wogs/" + lawDir + "/" + patternName + ".wog"));
+                drawStream(nameToInputStream(patternDir + "/" + lawDir + "/" + patternName + patternExt));
             } catch(IOException e) {
                 System.out.println("Error while loading pattern " + patternName);
                 myShowStatus("Error while loading resource.");
@@ -279,8 +283,8 @@ public class Recca extends Applet implements Runnable {
     }
     
     private void reloadRules() {
-		File wols = new File("wogs");
-		File[] children = wols.listFiles();
+		File laws = new File(patternDir);
+		File[] children = laws.listFiles();
 		if(children != null) {
 			Arrays.sort(children);
 			for(int i = 0; i<children.length; i++) {
@@ -288,7 +292,7 @@ public class Recca extends Applet implements Runnable {
 				if(children[i].isDirectory()) {
 					String[] hasLaw = children[i].list(new FilenameFilter() {
 						public boolean accept(File dir, String name) {
-							return name.equals("laws.wol");
+							return name.equals("laws" + lawExt);
 						}});
 					if(hasLaw != null && hasLaw.length > 0)
 						cLaws.add(children[i].getName());
@@ -298,16 +302,14 @@ public class Recca extends Applet implements Runnable {
 	}
 
     private void reloadCWogs() {
-		// wog.zip must contain a directory named "wogs" containing subdirectories which contains files named wogs
-        // and a law file name laws.wol
         cWogs.removeAll();
         cWogs.add("Patterns");
         cWogs.add(alea);
 
-        File wols = new File("wogs/" + lawDir);
-        File[] children = wols.listFiles(new FilenameFilter() {
+        File laws = new File(patternDir + "/" + lawDir);
+        File[] children = laws.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.endsWith(".wog");
+                return name.endsWith(patternExt);
             }});
         if(children != null) {
 			Arrays.sort(children);
@@ -542,8 +544,8 @@ public class Recca extends Applet implements Runnable {
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog(parent, "Open wog file", FileDialog.LOAD);
-        filedialog.setFile("*.wog");
+        FileDialog filedialog = new FileDialog(parent, "Open pattern file", FileDialog.LOAD);
+        filedialog.setFile("*" + patternExt);
         filedialog.setVisible(true);
         if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
@@ -558,14 +560,14 @@ public class Recca extends Applet implements Runnable {
 
         Frame parent = new Frame();
 
-        FileDialog filedialog = new FileDialog(parent, "Save wog file", FileDialog.SAVE);
-        filedialog.setFile("*.wog");
+        FileDialog filedialog = new FileDialog(parent, "Save pattern file", FileDialog.SAVE);
+        filedialog.setFile("*" + patternExt);
         filedialog.setVisible(true);
         if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             if(filename.indexOf('.') == -1)
-                filepath += ".wog";
+                filepath += patternExt;
 
             OutputStream fileWriter;
             try {
@@ -588,7 +590,7 @@ public class Recca extends Applet implements Runnable {
         Frame parent = new Frame();
 
         FileDialog filedialog = new FileDialog(parent, "Open laws file", FileDialog.LOAD);
-        filedialog.setFile("*.wol");
+        filedialog.setFile("*" + lawExt);
         filedialog.setVisible(true);
         if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
@@ -610,13 +612,13 @@ public class Recca extends Applet implements Runnable {
         Frame parent = new Frame();
 
         FileDialog filedialog = new FileDialog(parent, "Save laws file", FileDialog.SAVE);
-        filedialog.setFile("*.wol");
+        filedialog.setFile("*" + lawExt);
         filedialog.setVisible(true);
         if(filedialog.getFile() != null) {
             filename = filedialog.getFile();
             filepath = filedialog.getDirectory()+filename;
             if(filename.indexOf('.') == -1)
-                filepath += ".wol";
+                filepath += lawExt;
 
             OutputStream fileWriter;
             try {
@@ -640,11 +642,6 @@ public class Recca extends Applet implements Runnable {
  * - Undo button
  * - Edit mode in diagonal
  * - Choose what symmetries to apply
- */
-
-/*
- * Propriétés :
- * - il n'est pas possible d'avoir un debut _puis_ un cycle, chaque chose fait partie du cycle
- * ou alors ce n'est pas cyclique : puisque sinon, quand on fait reverse, on a d'abord un cycle
- * puis une fin, or si c'est un cycle on ne peut pas en sortir, donc pas de fin.
+ * - Add #iterations
+ * - Rotate pattern
  */
