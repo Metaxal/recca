@@ -53,7 +53,7 @@ public class Recca extends Applet implements Runnable {
     private final String automateLabel = "Automaton";
     private final String chargerLoisLabel = "Load Laws";
     private final String sauverLoisLabel = "Save Laws";
-    
+
     private final String patternDir = "patterns";
     private final String patternExt = ".pat";
     private final String lawExt = ".law";
@@ -281,7 +281,7 @@ public class Recca extends Applet implements Runnable {
             }
         }
     }
-    
+
     private void reloadRules() {
 		File laws = new File(patternDir);
 		File[] children = laws.listFiles();
@@ -359,14 +359,21 @@ public class Recca extends Applet implements Runnable {
     }
 
     public void run() {
+        long t = System.currentTimeMillis();
         while(gameThread != null) {
             grille.next();
-            grille.repaint();
             if(genTime != -1) {
+                grille.repaint();
                 try {
                     Thread.sleep(genTime);
                 } catch(InterruptedException e) {}
-			}
+			} else {
+                long t2 = System.currentTimeMillis();
+                if(t2 - t > 100) {
+                    t = t2;
+                    grille.repaint();
+                }
+            }
         }
     }
 
