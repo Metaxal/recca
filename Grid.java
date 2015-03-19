@@ -214,15 +214,31 @@ class Grid extends Canvas {
 
 	public synchronized boolean keyDown(java.awt.Event evt, int key) {
 		System.out.println("key = " + key);
-		if(!edition) {
+		
+		// Non edition mode
+		
+		switch(key) {
+		case 43: // +
+			cellSize += 2;
+			System.out.println("Inc cellSize");
+			break;
+		case 45: // -
+			if(cellSize > 2)
+				cellSize -= 2;
+			break;
+		default:
 			recca.handleKeystroke(key);
-			return true;
 		}
+		
+		if(!edition) 
+			return true;
+		
+		// Edition mode
 
 		int xi = Math.min(xEdit, xEdit2);
 		int yi = Math.min(yEdit, yEdit2);
-		int dx = Math.abs(xEdit2-xEdit) + 1;
-		int dy = Math.abs(yEdit2-yEdit) + 1;
+		int dx = Math.abs(xEdit2 - xEdit) + 1;
+		int dy = Math.abs(yEdit2 - yEdit) + 1;
 
 		int x, y;
 		if(evt.shiftDown()) {
@@ -240,21 +256,21 @@ class Grid extends Canvas {
 			else if(mode == MODE_LOIS)
 				modifCellLaws(tm[key - 48], xi, yi);
 
-		boolean modif = key >1003 && key < 1008;
+		boolean modif = key > 1003 && key < 1008;
 		switch(key) {
-		case 1004: // haut
+		case 1004: // up
 			x = xd(x, 1);
 			y = yd(y, 1);
 			break;
-		case 1005: // bas
+		case 1005: // down
 			x = xd(x, 5);
 			y = yd(y, 5);
 			break;
-		case 1006: //gauche
+		case 1006: // left
 			x = xd(x, 7);
 			y = yd(y, 7);
 			break;
-		case 1007: //droite
+		case 1007: // right
 			x = xd(x, 3);
 			y = yd(y, 3);
 			break;
@@ -268,10 +284,9 @@ class Grid extends Canvas {
 			for(int i = 0; i < Math.min(cellsT.length, cellCols - xEdit); i++)
 				for(int j = 0; j < Math.min(cellsT[0].length, cellRows - yEdit); j++)
 					if(cellsT[i][j] != 0)
-						cells1[xEdit+i][yEdit+j] = cellsT[i][j];
+						cells1[xEdit + i][yEdit + j] = cellsT[i][j];
 			break;
 		default:
-			recca.handleKeystroke(key);
 		}
 		if(evt.shiftDown()) {
 			xEdit2 = x;
