@@ -143,6 +143,20 @@ class Grid extends Canvas {
 				for(int j = y1; j < y2; j++)
 					cells1[i][j] = cells1[i][j] ^ n;
 	}
+	
+	public synchronized void rotateZone(int x1, int y1, int x2, int y2, int n) {
+		int dx = x2 - x1;
+		int dy = y2 - y1;
+		int[][] buf = new int[dx][dy];
+
+		for(int i = 0; i < dx; i++)
+			for(int j = 0; j < dy; j++)
+				buf[i][j] = tourneGaucheInt(cells1[i + x1][j + y1], n);
+				
+		for(int i = 0; i < dx; i++)
+			for(int j = 0; j < dy; j++)
+				cells1[x1 + j][y2 - 1 - i] = buf[i][j];
+	}
 
 	/*
 		cell before transformation and after could be put on one same cell.
@@ -206,7 +220,7 @@ class Grid extends Canvas {
 
 	public synchronized int hzSymetry9(int c) {
 		return
-			(c & 256) |(c & 128) |(c & 8) |
+			(c & 256) | (c & 128) | (c & 8) |
 			((c &  1) << 6) | ((c &  2) << 4) | ((c &  4) << 2) |
 			((c & 64) >> 6) | ((c & 32) >> 4) | ((c & 16) >> 2)
 		;
@@ -258,6 +272,12 @@ class Grid extends Canvas {
 
 		boolean modif = key > 1003 && key < 1008;
 		switch(key) {
+		case 1002: // Pg Up
+			rotateZone(xi, yi, xi + dx, yi + dy, 6);
+			break;
+		case 1003: // Pg Down
+			rotateZone(xi, yi, xi + dx, yi + dy, 2);
+			break;
 		case 1004: // up
 			x = xd(x, 1);
 			y = yd(y, 1);
