@@ -22,7 +22,7 @@ public class ReccaFrame extends Frame {
  
 	public static void main(String[] args) {
 		Frame myFrame = new ReccaFrame();
-			
+		myFrame.setLocationRelativeTo(null);
 		myFrame.setVisible(true);
 	}
 

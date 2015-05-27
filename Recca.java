@@ -163,6 +163,7 @@ public class Recca extends Applet implements Runnable {
         editionButton = new Button(edition);
 
         controls = new Panel();
+        controls.setLayout(new FlowLayout());
         controls.add(cLaws);
         controls.add(cWogs);
         controls.add(new Button(clear));
@@ -179,6 +180,7 @@ public class Recca extends Applet implements Runnable {
 
 
         lawsPanel = new Panel();
+        lawsPanel.setLayout(new FlowLayout());
         lawsPanel.add(new Button(chargerLoisLabel));
         lawsPanel.add(new Button(sauverLoisLabel));
         lawsPanel.add(new Button(automateLabel));
@@ -429,15 +431,18 @@ public class Recca extends Applet implements Runnable {
             add("North", lawsPanel);
             grille.setMode(grille.MODE_LOIS);
             grille.repaint();
-            validate();
+            revalidate();
+            lawsPanel.repaint();
             return true;
         } else if(automateLabel.equals(arg)) {
             remove(lawsPanel);
+            invalidate();
             add("North", controls);
             grille.setMode(grille.MODE_AUTOMATE);
             grille.initPalettes();
             grille.repaint();
-            validate();
+            revalidate();
+            controls.repaint();
             return true;
         } else if(sauverLoisLabel.equals(arg)) {
             sauverLois();
@@ -445,7 +450,7 @@ public class Recca extends Applet implements Runnable {
         } else if(chargerLoisLabel.equals(arg)) {
             chargerLois();
             //grille.initPalettes();
-            //grille.repaint();
+            grille.repaint();
             return true;
         } else {
         }
