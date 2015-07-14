@@ -7,10 +7,7 @@
 
 import java.util.Arrays;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.applet.*;
 import java.util.zip.*;
 import java.io.File;
@@ -23,15 +20,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import javax.swing.JToggleButton;
+import javax.swing.JButton;
 
-public class Recca extends Applet implements Runnable {
+public class Recca extends Frame implements Runnable, ActionListener {
     private Grid grille;
     private Thread gameThread = null;
     private int genTime = 0;
     private String lawDir;
-    private boolean isApplet = false;
 
-    private final String clear = "Clear";
+    private JButton buttonClear = new JButton("Clear");
+    private JButton buttonFile = new JButton("Load");
+    private JButton buttonSave = new JButton("Save");
+    private JButton buttonNext = new JButton("Next");
+    private JButton buttonReverse = new JButton("Reverse");
+    private JButton buttonGrid = new JButton("Grid");
+    private JButton buttonLaws = new JButton("Laws");
+    private JButton buttonAutomaton = new JButton("Go Back");
+    private JButton buttonLoadLaws = new JButton("Load Laws");
+    private JButton buttonSaveLaws = new JButton("Save Laws");
+
     private final String alea = "Random";
     private final String slow = "Slow";
     private final String fast = "Normal";
@@ -40,26 +48,16 @@ public class Recca extends Applet implements Runnable {
     private final String nextLabel = "Next";
     private final String startLabel = "Start";
     private final String stopLabel = "Stop";
-    private final String fileLabel = "Load";
-    private final String saveLabel = "Save";
-    private final String reverseLabel = "Reverse";
-    private final String pal1 = "Palette1";
-    private final String pal2 = "Palette2";
-    private final String pal3 = "Palette3";
     private final String edition = "Editor";
     private final String endEdition = "End Edit";
-    private final String gridLabel = "Grid";
-    private final String loisLabel = "Laws";
-    private final String automateLabel = "Automaton";
-    private final String chargerLoisLabel = "Load Laws";
-    private final String sauverLoisLabel = "Save Laws";
 
     private final String patternDir = "patterns";
     private final String patternExt = ".pat";
     private final String lawExt = ".law";
 
-    private Button startstopButton;
-    private Button editionButton;
+    private JToggleButton buttonStart = new JToggleButton(startLabel);
+    private JToggleButton buttonEdition = new JToggleButton(edition);
+    private JToggleButton buttonEditionLaws = new JToggleButton(edition);
 
 	private Choice cLaws = new Choice();
     private Choice cWogs = new Choice();
@@ -67,47 +65,21 @@ public class Recca extends Applet implements Runnable {
     Panel controls;
     Panel lawsPanel;
 
-    // This method is called automatically when this is an applet
-    // running in a browser
-    public void init() {
-		init(true);
-	}
-
-	// This method is called manually with isApplet=false when
-	// run in a frame
-    public void init(boolean isApplet) {
+	public Recca() {
+		super("Recca");
+		
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent we) {
+				dispose();
+			}});
+			
         int cellSize = 5;
         int cellCols = 150;
         int cellRows = 150;
         String param;
 
-        this.isApplet = isApplet;
-
         // set background
         setBackground(new Color(0x999999));
-
-        // read parameters from HTML if in an applet
-        if(isApplet) {
-			param = getParameter("cellsize");
-			if(param!= null)
-				cellSize = Integer.valueOf(param).intValue();
-
-			param = getParameter("cellsize");
-			if(param!= null)
-				cellSize = Integer.valueOf(param).intValue();
-
-			param = getParameter("cellcols");
-			if(param!= null)
-				cellCols = Integer.valueOf(param).intValue();
-
-			param = getParameter("cellrows");
-			if(param!= null)
-				cellRows = Integer.valueOf(param).intValue();
-
-			param = getParameter("gentime");
-			if(param!= null)
-				genTime = Integer.valueOf(param).intValue();
-		}
 
         // create components and add them to container
         grille = new Grid(this, cellSize, cellCols, cellRows);
@@ -155,35 +127,33 @@ public class Recca extends Applet implements Runnable {
         grille.setPalette(0);
         */
 
-        startstopButton = new Button(startLabel);
-        startstopButton.addActionListener(new ActionListener() {
-              public void actionPerformed(ActionEvent evt) {
-                  actionStartStop();
-            }});
-        editionButton = new Button(edition);
+        JButton jbutt;
+        JToggleButton togbutt;
 
         controls = new Panel();
         controls.setLayout(new FlowLayout());
         controls.add(cLaws);
         controls.add(cWogs);
-        controls.add(new Button(clear));
-        controls.add(startstopButton);
-        controls.add(new Button(nextLabel));
-        controls.add(new Button(reverseLabel));
-        controls.add(new Button(fileLabel));
-        controls.add(new Button(saveLabel));
+        controls.add(jbutt = buttonClear);
+        jbutt.addActionListener(this);
+        controls.add(togbutt = buttonStart); togbutt.addActionListener(this);
+        controls.add(jbutt = buttonNext); jbutt.addActionListener(this);
+        controls.add(jbutt = buttonReverse); jbutt.addActionListener(this);
+        controls.add(jbutt = buttonFile); jbutt.addActionListener(this);
+        controls.add(jbutt = buttonSave); jbutt.addActionListener(this);
         controls.add(cSpeed);
         //controls.add(palettes);
-        controls.add(editionButton);
-        controls.add(new Button(gridLabel));
-        controls.add(new Button(loisLabel));
+        controls.add(togbutt = buttonEdition); togbutt.addActionListener(this);
+        controls.add(jbutt = buttonGrid); jbutt.addActionListener(this);
+        controls.add(jbutt = buttonLaws); jbutt.addActionListener(this);
 
 
         lawsPanel = new Panel();
         lawsPanel.setLayout(new FlowLayout());
-        lawsPanel.add(new Button(chargerLoisLabel));
-        lawsPanel.add(new Button(sauverLoisLabel));
-        lawsPanel.add(new Button(automateLabel));
+        lawsPanel.add(jbutt = buttonLoadLaws); jbutt.addActionListener(this);
+        lawsPanel.add(jbutt = buttonSaveLaws); jbutt.addActionListener(this);
+        lawsPanel.add(jbutt = buttonAutomaton); jbutt.addActionListener(this);
+        lawsPanel.add(togbutt = buttonEditionLaws); togbutt.addActionListener(this);
 
 
         setLayout(new BorderLayout());
@@ -194,66 +164,15 @@ public class Recca extends Applet implements Runnable {
         resize(getPreferredSize());
         validate();
 
-
-		if(isApplet) {
-			// We can now give parameters to the URL!!
-			// example:
-			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true
-			// with direct link to the applet:
-			// file:///D:/Mes%20documents/Projets/RECCA/RECCA.html?rule=Strings&pattern=12&speed=Fast&start=true#applet
-
-			System.out.println("href =" + getDocumentBase());
-			String ruleName = getQueryValue("rule");
-			System.out.println("ruleName = " + ruleName);
-			if(ruleName != null)
-				changeRule(ruleName);
-			String patternName = getQueryValue("pattern");
-			System.out.println("patternName = " + patternName);
-			if(patternName != null)
-				changePattern(patternName);
-			String speedValue = getQueryValue("speed");
-			System.out.println("speedValue = " + speedValue);
-			if(speedValue != null)
-				changeSpeed(speedValue);
-			String startValue = getQueryValue("start");
-			System.out.println("startValue = " + startValue);
-			if(startValue != null)
-				actionStartStop();
-
-		}
-    }
-
-    private String getQueryValue(String name) {
-        URL href = getDocumentBase();
-        if(href == null)
-            return null;
-        String query = href.getQuery();
-        if(query == null)
-            return null;
-        String[] pairs = query.split("&");
-        for(int i = 0; i < pairs.length; i++)  {
-            String[] pair = pairs[i].split("=");
-            if(pair[0].equals(name))
-                    return pair[1];
-        }
-        return null;
+		pack(); // set window to appropriate size (for its elements)
     }
 
     private void myShowStatus(String status) {
-		if(isApplet) {
-			myShowStatus(status);
-		} else {
-			System.out.println(status);
-		}
-
+		System.out.println(status);
 	}
 
     private InputStream nameToInputStream(String name) throws IOException {
-		if(isApplet) {
-			return new DataInputStream((new URL(getCodeBase(), name)).openStream());
-		} else {
-			return new FileInputStream(name);
-		}
+		return new FileInputStream(name);
 	}
 
     private void changeRule(String ruleName) {
@@ -265,8 +184,6 @@ public class Recca extends Applet implements Runnable {
         } catch(IOException e) {
             System.out.println("Error while loading laws " + ruleName);
             System.out.println(e.toString());
-            if(isApplet)
-				myShowStatus("Error while loading resource.");
         }
     }
 
@@ -335,16 +252,6 @@ public class Recca extends Applet implements Runnable {
             genTime = -1;
     }
 
-    private void actionStartStop() {
-        if(startstopButton.getLabel().equals(startLabel)) {
-            start2();
-            startstopButton.setLabel(stopLabel);
-        } else {
-            stop();
-            startstopButton.setLabel(startLabel);
-        }
-    }
-
     // no start() to prevent starting immediately
     public void start2() {
         if(gameThread == null) {
@@ -378,63 +285,58 @@ public class Recca extends Applet implements Runnable {
             }
         }
     }
-
-    public boolean action(Event evt, Object arg) {
-        if(clear.equals(arg)) // clear
+    
+    public void actionStartStop() {
+		if(buttonStart.isSelected()){
+			start2();
+			buttonStart.setLabel(stopLabel);
+		} else {
+			stop();
+			buttonStart.setLabel(startLabel);
+		}
+	}
+    
+    public void actionPerformed(ActionEvent ev) {
+		Object source = ev.getSource();
+		if(source == buttonClear)
         {
             grille.clear();
             grille.repaint();
-            return true;
-        } else if(nextLabel.equals(arg)) { // next
+        } else if(source == buttonNext) {
             grille.next();
             grille.repaint();
-            return true;
-        } else if(fileLabel.equals(arg)) {
+		} else if(source == buttonStart) {
+			actionStartStop();
+		} else if(source == buttonEdition || source == buttonEditionLaws) {
+		 	JToggleButton tBtn = (JToggleButton)ev.getSource();
+			if(tBtn.isSelected()){
+				grille.invertEdition();
+				tBtn.setLabel(endEdition);
+				grille.repaint();
+			} else{
+				grille.invertEdition();
+				tBtn.setLabel(edition);
+				grille.repaint();
+			}
+		} else if(source == buttonFile) {
             ouvrirFichier();
             grille.repaint();
-            return true;
-        } else if(saveLabel.equals(arg)) {
+		} else if(source == buttonSave) {
             sauver();
-            return true;
-        } else if(reverseLabel.equals(arg)) {
+		} else if(source == buttonReverse) {
             grille.reverse();
             grille.repaint();
-            return true;
-        } else if(pal1.equals(arg)) {
-            grille.setPalette(0);
-            grille.repaint();
-            return true;
-        } else if(pal2.equals(arg)) {
-            grille.setPalette(1);
-            grille.repaint();
-            return true;
-        } else if(pal3.equals(arg)) {
-            grille.setPalette(2);
-            grille.repaint();
-            return true;
-        } else if(edition.equals(arg)) {
-            grille.invertEdition();
-            editionButton.setLabel(endEdition);
-            grille.repaint();
-            return true;
-        } else if(endEdition.equals(arg)) {
-            grille.invertEdition();
-            editionButton.setLabel(edition);
-            grille.repaint();
-            return true;
-        } else if(gridLabel.equals(arg)) {
+		} else if(source == buttonGrid) {
             grille.invertGridMode();
             grille.repaint();
-            return true;
-        } else if(loisLabel.equals(arg)) {
+		} else if(source == buttonLaws) {
             remove(controls);
             add("North", lawsPanel);
             grille.setMode(grille.MODE_LOIS);
             grille.repaint();
             revalidate();
             lawsPanel.repaint();
-            return true;
-        } else if(automateLabel.equals(arg)) {
+		} else if(source == buttonAutomaton) {
             remove(lawsPanel);
             invalidate();
             add("North", controls);
@@ -443,19 +345,13 @@ public class Recca extends Applet implements Runnable {
             grille.repaint();
             revalidate();
             controls.repaint();
-            return true;
-        } else if(sauverLoisLabel.equals(arg)) {
+		} else if(source == buttonSaveLaws) {
             sauverLois();
-            return true;
-        } else if(chargerLoisLabel.equals(arg)) {
+		} else if(source == buttonLoadLaws) {
             chargerLois();
-            //grille.initPalettes();
             grille.repaint();
-            return true;
-        } else {
-        }
-        return false;
-    }
+		}
+	}
 
     public void handleKeystroke(int key) {
 		switch(key) {
@@ -476,12 +372,6 @@ public class Recca extends Applet implements Runnable {
         default:
         }
     }
-
-    public String getAppletInfo()
-    {
-        return "RECCA\nCopyright 2005-2015 Laurent Orseau";
-    }
-
 
     // draws the shape to canvas
     public void drawShape(int shapeWidth, int shapeHeight, int shape[][]) {
@@ -645,6 +535,12 @@ public class Recca extends Applet implements Runnable {
         }
 
     }
+
+	public static void main(String[] args) {
+		Frame myFrame = new Recca();
+		myFrame.setLocationRelativeTo(null);
+		myFrame.setVisible(true);
+	}
 }
 
 
