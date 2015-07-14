@@ -22,6 +22,8 @@ import java.io.OutputStream;
 import java.net.URL;
 import javax.swing.JToggleButton;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 
 public class Recca extends Frame implements Runnable, ActionListener {
     private Grid grille;
@@ -59,11 +61,12 @@ public class Recca extends Frame implements Runnable, ActionListener {
     private JToggleButton buttonEdition = new JToggleButton(edition);
     private JToggleButton buttonEditionLaws = new JToggleButton(edition);
 
-	private Choice cLaws = new Choice();
-    private Choice cWogs = new Choice();
+	private JComboBox cLaws = new JComboBox();
+    private JComboBox cPats = new JComboBox();
+    private JComboBox cSpeed = new JComboBox();
 
-    Panel controls;
-    Panel lawsPanel;
+    JPanel controls;
+    JPanel lawsPanel;
 
 	public Recca() {
 		super("Recca");
@@ -85,7 +88,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
         grille = new Grid(this, cellSize, cellCols, cellRows);
 
         // add the laws
-        cLaws.add("Rules");
+        cLaws.addItem("Rules");
         reloadRules();
         cLaws.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
@@ -95,7 +98,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
               }});
 
         reloadCWogs();
-        cWogs.addItemListener(new ItemListener() {
+        cPats.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
                     System.out.println("Loading pattern " + arg);
@@ -103,7 +106,6 @@ public class Recca extends Frame implements Runnable, ActionListener {
               }});
 
 
-        Choice cSpeed = new Choice();
         cSpeed.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
@@ -111,29 +113,20 @@ public class Recca extends Frame implements Runnable, ActionListener {
                     changeSpeed(arg);
               }});
 
-        cSpeed.add(slow);
-        cSpeed.add(fast);
-        cSpeed.add(faster);
-        cSpeed.add(maxSpeed);
-        cSpeed.select(1);
+        cSpeed.addItem(slow);
+        cSpeed.addItem(fast);
+        cSpeed.addItem(faster);
+        cSpeed.addItem(maxSpeed);
+        cSpeed.setSelectedItem(1);
         genTime = 30;
-
-        /*
-        Choice palettes = new Choice();
-        palettes.addItem(pal1);
-        palettes.addItem(pal2);
-        palettes.addItem(pal3);
-        palettes.select(0);
-        grille.setPalette(0);
-        */
 
         JButton jbutt;
         JToggleButton togbutt;
 
-        controls = new Panel();
+        controls = new JPanel();
         controls.setLayout(new FlowLayout());
         controls.add(cLaws);
-        controls.add(cWogs);
+        controls.add(cPats);
         controls.add(jbutt = buttonClear);
         jbutt.addActionListener(this);
         controls.add(togbutt = buttonStart); togbutt.addActionListener(this);
@@ -142,13 +135,12 @@ public class Recca extends Frame implements Runnable, ActionListener {
         controls.add(jbutt = buttonFile); jbutt.addActionListener(this);
         controls.add(jbutt = buttonSave); jbutt.addActionListener(this);
         controls.add(cSpeed);
-        //controls.add(palettes);
         controls.add(togbutt = buttonEdition); togbutt.addActionListener(this);
         controls.add(jbutt = buttonGrid); jbutt.addActionListener(this);
         controls.add(jbutt = buttonLaws); jbutt.addActionListener(this);
 
 
-        lawsPanel = new Panel();
+        lawsPanel = new JPanel();
         lawsPanel.setLayout(new FlowLayout());
         lawsPanel.add(jbutt = buttonLoadLaws); jbutt.addActionListener(this);
         lawsPanel.add(jbutt = buttonSaveLaws); jbutt.addActionListener(this);
@@ -214,16 +206,16 @@ public class Recca extends Frame implements Runnable, ActionListener {
 							return name.equals("laws" + lawExt);
 						}});
 					if(hasLaw != null && hasLaw.length > 0)
-						cLaws.add(children[i].getName());
+						cLaws.addItem(children[i].getName());
 				}
 			}
 		}
 	}
 
     private void reloadCWogs() {
-        cWogs.removeAll();
-        cWogs.add("Patterns");
-        cWogs.add(alea);
+        cPats.removeAllItems();
+        cPats.addItem("Patterns");
+        cPats.addItem(alea);
 
         File laws = new File(patternDir + "/" + lawDir);
         File[] children = laws.listFiles(new FilenameFilter() {
@@ -235,7 +227,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
             for(int i=0; i<children.length; i++) {
                 String name = children[i].getName();
                 System.out.println(children[i].getName());
-                cWogs.add(name.substring(0, name.length()-4));
+                cPats.addItem(name.substring(0, name.length()-4));
             }
         }
        validate();

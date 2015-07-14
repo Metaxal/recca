@@ -9,7 +9,7 @@ This is a CA framework to design various kinds of CAs, where it is easy to desig
 
 ```shell
 javac *.java
-java ReccaFrame
+java Recca
 ```
 Here you go, the frame should show up.
 

@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.io.*;
 import java.util.*;
+import javax.swing.JPanel;
 /*
  * This automaton class is based on Fredkin'd Billiard Ball machine with a Moore neighbourhood.
  * (well actually I had the idea separately, but Fredkin's clearly predates this)
@@ -14,7 +15,7 @@ import java.util.*;
  * @author lorseau
  *
  */
-class Grid extends Canvas {
+class Grid extends Canvas /*JPanel*/ {
 	
 	private int mode;
 	//private int palette;
