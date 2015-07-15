@@ -1,10 +1,3 @@
-/* Applet Problems ?
- * from: http://forums.sun.com/thread.jspa?threadID=655119
- * when the path file name contains a space, it can cause problems to load the applet!
- * moving to a directory without space works!
- *
- */
-
 import java.util.Arrays;
 import java.awt.*;
 import java.awt.event.*;
@@ -23,12 +16,12 @@ import java.net.URL;
 import javax.swing.JToggleButton;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
-public class Recca extends Frame implements Runnable, ActionListener {
+public class Recca extends JFrame implements ActionListener {
     private Grid grille;
-    private Thread gameThread = null;
-    private int genTime = 0;
     private String lawDir;
 
     private JButton buttonClear = new JButton("Clear");
@@ -61,21 +54,23 @@ public class Recca extends Frame implements Runnable, ActionListener {
     private JToggleButton buttonEdition = new JToggleButton(edition);
     private JToggleButton buttonEditionLaws = new JToggleButton(edition);
 
-	private JComboBox cLaws = new JComboBox();
+    private JComboBox cLaws = new JComboBox();
     private JComboBox cPats = new JComboBox();
     private JComboBox cSpeed = new JComboBox();
 
-    JPanel controls;
-    JPanel lawsPanel;
+    private JPanel controls;
+    private JPanel lawsPanel;
+    
+    private Timer timer;
 
-	public Recca() {
-		super("Recca");
-		
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent we) {
-				dispose();
-			}});
-			
+    public Recca() {
+        super("Recca");
+        
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent we) {
+                dispose();
+            }});
+            
         int cellSize = 5;
         int cellCols = 150;
         int cellRows = 150;
@@ -86,6 +81,8 @@ public class Recca extends Frame implements Runnable, ActionListener {
 
         // create components and add them to container
         grille = new Grid(this, cellSize, cellCols, cellRows);
+        
+        timer = new Timer(100, this);
 
         // add the laws
         cLaws.addItem("Rules");
@@ -97,7 +94,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
                     changeRule(arg);
               }});
 
-        reloadCWogs();
+        reloadCPats();
         cPats.addItemListener(new ItemListener() {
               public void itemStateChanged(ItemEvent evt) {
                     String arg = evt.getItem().toString();
@@ -117,8 +114,6 @@ public class Recca extends Frame implements Runnable, ActionListener {
         cSpeed.addItem(fast);
         cSpeed.addItem(faster);
         cSpeed.addItem(maxSpeed);
-        cSpeed.setSelectedItem(1);
-        genTime = 30;
 
         JButton jbutt;
         JToggleButton togbutt;
@@ -127,8 +122,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
         controls.setLayout(new FlowLayout());
         controls.add(cLaws);
         controls.add(cPats);
-        controls.add(jbutt = buttonClear);
-        jbutt.addActionListener(this);
+        controls.add(jbutt = buttonClear); jbutt.addActionListener(this);
         controls.add(togbutt = buttonStart); togbutt.addActionListener(this);
         controls.add(jbutt = buttonNext); jbutt.addActionListener(this);
         controls.add(jbutt = buttonReverse); jbutt.addActionListener(this);
@@ -152,27 +146,32 @@ public class Recca extends Frame implements Runnable, ActionListener {
         add("North", controls);
         grille.setMode(grille.MODE_AUTOMATE);
         add("Center", grille);
-        setVisible(true);
+        
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    
         resize(getPreferredSize());
-        validate();
 
-		pack(); // set window to appropriate size (for its elements)
+        pack(); // set window to appropriate size (for its elements)
+        setVisible(true);
+        
+        cSpeed.setSelectedItem(fast);
+        
     }
 
     private void myShowStatus(String status) {
-		System.out.println(status);
-	}
+        System.out.println(status);
+    }
 
     private InputStream nameToInputStream(String name) throws IOException {
-		return new FileInputStream(name);
-	}
+        return new FileInputStream(name);
+    }
 
     private void changeRule(String ruleName) {
         try {
-			InputStream lawStream = nameToInputStream(patternDir + "/" + ruleName + "/laws" + lawExt);
+            InputStream lawStream = nameToInputStream(patternDir + "/" + ruleName + "/laws" + lawExt);
             grille.chargerLois(lawStream);
             lawDir = ruleName; // set it afterwards in case the above fails
-            reloadCWogs();
+            reloadCPats();
         } catch(IOException e) {
             System.out.println("Error while loading laws " + ruleName);
             System.out.println(e.toString());
@@ -194,25 +193,25 @@ public class Recca extends Frame implements Runnable, ActionListener {
     }
 
     private void reloadRules() {
-		File laws = new File(patternDir);
-		File[] children = laws.listFiles();
-		if(children != null) {
-			Arrays.sort(children);
-			for(int i = 0; i<children.length; i++) {
-				// Get filename of file or directory
-				if(children[i].isDirectory()) {
-					String[] hasLaw = children[i].list(new FilenameFilter() {
-						public boolean accept(File dir, String name) {
-							return name.equals("laws" + lawExt);
-						}});
-					if(hasLaw != null && hasLaw.length > 0)
-						cLaws.addItem(children[i].getName());
-				}
-			}
-		}
-	}
+        File laws = new File(patternDir);
+        File[] children = laws.listFiles();
+        if(children != null) {
+            Arrays.sort(children);
+            for(int i = 0; i<children.length; i++) {
+                // Get filename of file or directory
+                if(children[i].isDirectory()) {
+                    String[] hasLaw = children[i].list(new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return name.equals("laws" + lawExt);
+                        }});
+                    if(hasLaw != null && hasLaw.length > 0)
+                        cLaws.addItem(children[i].getName());
+                }
+            }
+        }
+    }
 
-    private void reloadCWogs() {
+    private void reloadCPats() {
         cPats.removeAllItems();
         cPats.addItem("Patterns");
         cPats.addItem(alea);
@@ -223,7 +222,7 @@ public class Recca extends Frame implements Runnable, ActionListener {
                 return name.endsWith(patternExt);
             }});
         if(children != null) {
-			Arrays.sort(children);
+            Arrays.sort(children);
             for(int i=0; i<children.length; i++) {
                 String name = children[i].getName();
                 System.out.println(children[i].getName());
@@ -235,100 +234,88 @@ public class Recca extends Frame implements Runnable, ActionListener {
 
     private void changeSpeed(String arg) {
         if(slow.equals(arg))
-            genTime = 200;
+            timer.setDelay(200);
         else if(fast.equals(arg))
-            genTime = 30;
+            timer.setDelay(30);
         else if(faster.equals(arg))
-            genTime = 0;
+            timer.setDelay(1);
         else if(maxSpeed.equals(arg))
-            genTime = -1;
+            timer.setDelay(0);
     }
 
-    // no start() to prevent starting immediately
-    public void start2() {
-        if(gameThread == null) {
-            gameThread = new Thread(this);
-            gameThread.start();
-        }
+    public void start() {
+        timer.restart();
+        buttonStart.setLabel(stopLabel);
+        buttonStart.setSelected(true);
     }
 
     public void stop() {
-        if(gameThread != null) {
-            //gameThread.stop();
-            gameThread = null;
-        }
-    }
-
-    public void run() {
-        long t = System.currentTimeMillis();
-        while(gameThread != null) {
-            grille.next();
-            if(genTime != -1) {
-                grille.repaint();
-                try {
-                    Thread.sleep(genTime);
-                } catch(InterruptedException e) {}
-			} else {
-                long t2 = System.currentTimeMillis();
-                if(t2 - t > 100) {
-                    t = t2;
-                    grille.repaint();
-                }
-            }
-        }
+        timer.stop();
+        buttonStart.setLabel(startLabel);
+        buttonStart.setSelected(false);
     }
     
-    public void actionStartStop() {
-		if(buttonStart.isSelected()){
-			start2();
-			buttonStart.setLabel(stopLabel);
-		} else {
-			stop();
-			buttonStart.setLabel(startLabel);
-		}
+    public void startStop() {
+        if(buttonStart.isSelected()){
+            stop();
+        } else {
+            start();
+        }
 	}
+
+    public void actionStartStop() {
+		// reverse of startStop() as we just pressed the button
+        if(buttonStart.isSelected()){
+            start();
+        } else {
+            stop();
+        }
+    }
     
     public void actionPerformed(ActionEvent ev) {
-		Object source = ev.getSource();
-		if(source == buttonClear)
-        {
+        Object source = ev.getSource();
+        if (source == timer){
+            grille.next();
+            //grille.repaint(); // doesn't repaint often enough?!
+            repaint();
+        } else if(source == buttonClear) {
             grille.clear();
             grille.repaint();
         } else if(source == buttonNext) {
             grille.next();
             grille.repaint();
-		} else if(source == buttonStart) {
-			actionStartStop();
-		} else if(source == buttonEdition || source == buttonEditionLaws) {
-		 	JToggleButton tBtn = (JToggleButton)ev.getSource();
-			if(tBtn.isSelected()){
-				grille.invertEdition();
-				tBtn.setLabel(endEdition);
-				grille.repaint();
-			} else{
-				grille.invertEdition();
-				tBtn.setLabel(edition);
-				grille.repaint();
-			}
-		} else if(source == buttonFile) {
+        } else if(source == buttonStart) {
+            actionStartStop();
+        } else if(source == buttonEdition || source == buttonEditionLaws) {
+             JToggleButton tBtn = (JToggleButton)ev.getSource();
+            if(tBtn.isSelected()){
+                grille.setEdition(true);
+                tBtn.setLabel(endEdition);
+                grille.repaint();
+            } else{
+                grille.setEdition(false);
+                tBtn.setLabel(edition);
+                grille.repaint();
+            }
+        } else if(source == buttonFile) {
             ouvrirFichier();
             grille.repaint();
-		} else if(source == buttonSave) {
+        } else if(source == buttonSave) {
             sauver();
-		} else if(source == buttonReverse) {
+        } else if(source == buttonReverse) {
             grille.reverse();
             grille.repaint();
-		} else if(source == buttonGrid) {
+        } else if(source == buttonGrid) {
             grille.invertGridMode();
             grille.repaint();
-		} else if(source == buttonLaws) {
+        } else if(source == buttonLaws) {
             remove(controls);
             add("North", lawsPanel);
             grille.setMode(grille.MODE_LOIS);
             grille.repaint();
             revalidate();
             lawsPanel.repaint();
-		} else if(source == buttonAutomaton) {
+        } else if(source == buttonAutomaton) {
             remove(lawsPanel);
             invalidate();
             add("North", controls);
@@ -337,31 +324,11 @@ public class Recca extends Frame implements Runnable, ActionListener {
             grille.repaint();
             revalidate();
             controls.repaint();
-		} else if(source == buttonSaveLaws) {
+        } else if(source == buttonSaveLaws) {
             sauverLois();
-		} else if(source == buttonLoadLaws) {
+        } else if(source == buttonLoadLaws) {
             chargerLois();
             grille.repaint();
-		}
-	}
-
-    public void handleKeystroke(int key) {
-		switch(key) {
-		case 10: // Enter
-            actionStartStop();
-			break;
-        case 32: // Space
-            grille.next();
-            grille.repaint();
-            break;
-        case 8: // Backspace
-			// One step back
-            grille.reverse();
-            grille.next();
-            grille.reverse();
-            grille.repaint();
-            break;
-        default:
         }
     }
 
@@ -429,7 +396,6 @@ public class Recca extends Frame implements Runnable, ActionListener {
         } catch(IOException e) {
             myShowStatus("Error while reading file.");
         }
-
     }
 
     private void ouvrirFichier() {
@@ -474,7 +440,6 @@ public class Recca extends Frame implements Runnable, ActionListener {
                 myShowStatus("Error saving file.");
             }
         }
-
     }
 
     private void chargerLois() {
@@ -525,17 +490,14 @@ public class Recca extends Frame implements Runnable, ActionListener {
                 myShowStatus("Error saving file.");
             }
         }
-
     }
 
-	public static void main(String[] args) {
-		Frame myFrame = new Recca();
-		myFrame.setLocationRelativeTo(null);
-		myFrame.setVisible(true);
-	}
+    public static void main(String[] args) {
+        Frame myFrame = new Recca();
+        myFrame.setLocationRelativeTo(null);
+        myFrame.setVisible(true);
+    }
 }
-
-
 
 /*
  * TODO
@@ -543,5 +505,4 @@ public class Recca extends Frame implements Runnable, ActionListener {
  * - Edit mode in diagonal
  * - Choose what symmetries to apply
  * - Add #iterations
- * - Rotate pattern
  */
