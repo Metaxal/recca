@@ -48,6 +48,8 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
     public final int MODE_AUTOMATE    = 1;
 
     public Grid(Recca recca, int cellSize, int cellCols, int cellRows) {
+        super(true);
+
         this.recca = recca;
         mode = MODE_AUTOMATE;
         cells1 = new int[cellCols][cellRows];
@@ -246,31 +248,31 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
         // Non edition mode
         
         switch(keyCode) {
-	        case KeyEvent.VK_PLUS:
-	            cellSize += 2;
-	            repaint();
-	            break;
-	        case KeyEvent.VK_MINUS:
-	            if(cellSize > 2) {
-	                cellSize -= 2;
-	                repaint();
-	            }
-	            break;
-	        case KeyEvent.VK_SPACE:
-	            next();
-	            repaint();
-	            break;
-	        case KeyEvent.VK_ENTER:
-	            recca.startStop();
-	            break;
-	        case KeyEvent.VK_BACK_SPACE:
-	            // WARNING: Should be allowed only for reversible laws!
-	            // One step back
-	            reverse();
-	            next();
-	            reverse();
-	            repaint();
-	            break;
+            case KeyEvent.VK_PLUS:
+                cellSize += 2;
+                repaint();
+                break;
+            case KeyEvent.VK_MINUS:
+                if(cellSize > 2) {
+                    cellSize -= 2;
+                    repaint();
+                }
+                break;
+            case KeyEvent.VK_SPACE:
+                next();
+                repaint();
+                break;
+            case KeyEvent.VK_ENTER:
+                recca.startStop();
+                break;
+            case KeyEvent.VK_BACK_SPACE:
+                // WARNING: Should be allowed only for reversible laws!
+                // One step back
+                reverse();
+                next();
+                reverse();
+                repaint();
+                break;
         }
         
         if(!edition) 
@@ -295,10 +297,10 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
         int tm[] = {0, 64, 32, 16, 128, 256, 8, 1, 2, 4};
         int num = -1;
         if(keyCode >= KeyEvent.VK_0 && keyCode <= KeyEvent.VK_9)
-	        num = keyCode - KeyEvent.VK_0;
-		else if(keyCode >= KeyEvent.VK_NUMPAD0 && keyCode <= KeyEvent.VK_NUMPAD9)
-			num = keyCode - KeyEvent.VK_NUMPAD0;
-		if(num >= 0) {
+            num = keyCode - KeyEvent.VK_0;
+        else if(keyCode >= KeyEvent.VK_NUMPAD0 && keyCode <= KeyEvent.VK_NUMPAD9)
+            num = keyCode - KeyEvent.VK_NUMPAD0;
+        if(num >= 0) {
             if(mode == MODE_AUTOMATE)
                 modifZone(tm[num], xi, yi, xi + dx, yi + dy);
             else if(mode == MODE_LOIS)
@@ -307,48 +309,50 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
 
         boolean move = false;
         switch(keyCode) {
-	        case KeyEvent.VK_PAGE_UP:
-	            rotateZone(xi, yi, xi + dx, yi + dy, 6);
-	            break;
-	        case KeyEvent.VK_PAGE_DOWN:
-	            rotateZone(xi, yi, xi + dx, yi + dy, 2);
-	            break;
-	        case KeyEvent.VK_UP:
-	            x = xd(x, 1);
-	            y = yd(y, 1);
-	            move = true;
-	            break;
-	        case KeyEvent.VK_DOWN:
-	            x = xd(x, 5);
-	            y = yd(y, 5);
-	            move = true;
-	            break;
-	        case KeyEvent.VK_LEFT:
-	            x = xd(x, 7);
-	            y = yd(y, 7);
-	            move = true;
-	            break;
-	        case KeyEvent.VK_RIGHT:
-	            x = xd(x, 3);
-	            y = yd(y, 3);
-	            move = true;
-	            break;
+            case KeyEvent.VK_PAGE_UP:
+                rotateZone(xi, yi, xi + dx, yi + dy, 6);
+                break;
+            case KeyEvent.VK_PAGE_DOWN:
+                rotateZone(xi, yi, xi + dx, yi + dy, 2);
+                break;
+            case KeyEvent.VK_UP:
+                x = xd(x, 1);
+                y = yd(y, 1);
+                move = true;
+                break;
+            case KeyEvent.VK_DOWN:
+                x = xd(x, 5);
+                y = yd(y, 5);
+                move = true;
+                break;
+            case KeyEvent.VK_LEFT:
+                x = xd(x, 7);
+                y = yd(y, 7);
+                move = true;
+                break;
+            case KeyEvent.VK_RIGHT:
+                x = xd(x, 3);
+                y = yd(y, 3);
+                move = true;
+                break;
         }
         
         if(evt.isControlDown()) {
             switch(keyCode) {
                 case KeyEvent.VK_C:
-	                cellsT = new int[dx][dy];
-	                for(int i = 0; i < dx; i++)
-	                    for(int j = 0; j < dy; j++)
-	                        cellsT[i][j] = cells1[i + xi][j + yi];
-	                break;
-	            case KeyEvent.VK_V:
-	                for(int i = 0; i < Math.min(cellsT.length, cellCols - xEdit); i++)
-	                    for(int j = 0; j < Math.min(cellsT[0].length, cellRows - yEdit); j++)
-	                        if(cellsT[i][j] != 0)
-	                            cells1[xEdit + i][yEdit + j] = cellsT[i][j];
-	                break;
+                    cellsT = new int[dx][dy];
+                    for(int i = 0; i < dx; i++)
+                        for(int j = 0; j < dy; j++)
+                            cellsT[i][j] = cells1[i + xi][j + yi];
+                    break;
+                case KeyEvent.VK_V:
+                    if(cellsT != null) {
+                        for(int i = 0; i < Math.min(cellsT.length, cellCols - xEdit); i++)
+                            for(int j = 0; j < Math.min(cellsT[0].length, cellRows - yEdit); j++)
+                                if(cellsT[i][j] != 0)
+                                    cells1[xEdit + i][yEdit + j] = cellsT[i][j];
+                    }
+                    break;
             }
         }
         
@@ -387,7 +391,7 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
 
 
     public void mouseClicked(MouseEvent e) {
-        requestFocus();
+        requestFocus(); // to give keyboard focus
     }
     
     public void mousePressed(MouseEvent e) {
@@ -405,6 +409,7 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
         setEdit2(x, y);
 
         repaint();
+        requestFocus(); // to give keyboard focus
     }
     
     public void mouseReleased(MouseEvent e) {
@@ -507,10 +512,10 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
     }
 
     public void paintComponent(Graphics g) {
-        //super.paintComponent(g);
+        super.paintComponent(g);
+        //g.setColor(Color.black);
+        //g.fillRect(0, 0, cellSize * cellCols - 1, cellSize * cellRows - 1);
         
-        g.setColor(Color.black);
-        g.fillRect(0, 0, cellSize * cellCols - 1, cellSize * cellRows - 1);
         // draw grid
         g.setColor(getBackground());
         if(gridMode)

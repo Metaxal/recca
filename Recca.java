@@ -19,6 +19,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+import javax.swing.SwingUtilities;
 
 public class Recca extends JFrame implements ActionListener {
     private Grid grille;
@@ -261,10 +262,10 @@ public class Recca extends JFrame implements ActionListener {
         } else {
             start();
         }
-	}
+    }
 
     public void actionStartStop() {
-		// reverse of startStop() as we just pressed the button
+        // reverse of startStop() as we just pressed the button
         if(buttonStart.isSelected()){
             start();
         } else {
@@ -274,10 +275,9 @@ public class Recca extends JFrame implements ActionListener {
     
     public void actionPerformed(ActionEvent ev) {
         Object source = ev.getSource();
-        if (source == timer){
+        if(source == timer){
             grille.next();
-            //grille.repaint(); // doesn't repaint often enough?!
-            repaint();
+            grille.repaint();
         } else if(source == buttonClear) {
             grille.clear();
             grille.repaint();
@@ -492,10 +492,18 @@ public class Recca extends JFrame implements ActionListener {
         }
     }
 
-    public static void main(String[] args) {
+    private static void createAndShowGUI() {
         Frame myFrame = new Recca();
         myFrame.setLocationRelativeTo(null);
         myFrame.setVisible(true);
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
     }
 }
 
