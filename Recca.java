@@ -78,7 +78,7 @@ public class Recca extends JFrame implements ActionListener {
         String param;
 
         // set background
-        setBackground(new Color(0x999999));
+        setBackground(Color.BLACK);
 
         // create components and add them to container
         grille = new Grid(this, cellSize, cellCols, cellRows);
@@ -277,6 +277,7 @@ public class Recca extends JFrame implements ActionListener {
         if(source == timer){
             grille.next();
             grille.repaint();
+			getToolkit().sync();
         } else if(source == buttonClear) {
             grille.clear();
             grille.repaint();

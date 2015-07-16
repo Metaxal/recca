@@ -513,8 +513,6 @@ class Grid extends JPanel implements KeyListener, MouseInputListener {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        //g.setColor(Color.black);
-        //g.fillRect(0, 0, cellSize * cellCols - 1, cellSize * cellRows - 1);
         
         // draw grid
         g.setColor(getBackground());
