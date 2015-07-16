@@ -55,9 +55,9 @@ public class Recca extends JFrame implements ActionListener {
     private JToggleButton buttonEdition = new JToggleButton(edition);
     private JToggleButton buttonEditionLaws = new JToggleButton(edition);
 
-    private JComboBox cLaws = new JComboBox();
-    private JComboBox cPats = new JComboBox();
-    private JComboBox cSpeed = new JComboBox();
+    private JComboBox<String> cLaws = new JComboBox<>();
+    private JComboBox<String> cPats = new JComboBox<>();
+    private JComboBox<String> cSpeed = new JComboBox<>();
 
     private JPanel controls;
     private JPanel lawsPanel;
@@ -150,10 +150,9 @@ public class Recca extends JFrame implements ActionListener {
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     
-        resize(getPreferredSize());
+        setSize(getPreferredSize());
 
         pack(); // set window to appropriate size (for its elements)
-        setVisible(true);
         
         cSpeed.setSelectedItem(fast);
         
@@ -246,13 +245,13 @@ public class Recca extends JFrame implements ActionListener {
 
     public void start() {
         timer.restart();
-        buttonStart.setLabel(stopLabel);
+        buttonStart.setText(stopLabel);
         buttonStart.setSelected(true);
     }
 
     public void stop() {
         timer.stop();
-        buttonStart.setLabel(startLabel);
+        buttonStart.setText(startLabel);
         buttonStart.setSelected(false);
     }
     
@@ -290,11 +289,11 @@ public class Recca extends JFrame implements ActionListener {
              JToggleButton tBtn = (JToggleButton)ev.getSource();
             if(tBtn.isSelected()){
                 grille.setEdition(true);
-                tBtn.setLabel(endEdition);
+                tBtn.setText(endEdition);
                 grille.repaint();
             } else{
                 grille.setEdition(false);
-                tBtn.setLabel(edition);
+                tBtn.setText(edition);
                 grille.repaint();
             }
         } else if(source == buttonFile) {
